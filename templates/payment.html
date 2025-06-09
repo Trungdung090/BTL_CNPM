@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/payment.css') }}">
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Thanh Toán</h2>
+    <p>Bạn đang đặt sân: {{ booking.pitch_name }}</p>
+    <form id="payment-form" method="POST" action="{{ url_for('payment') }}">
+        <input type="hidden" id="payment_method" name="payment_method">
+        <div class="payment-methods">
+            <div class="payment-method" data-method="momo">
+                <img src="{{ url_for('static', filename='images/momo.png') }}" alt="Momo">
+                <span>Ví Momo</span>
+            </div>
+            <div class="payment-method" data-method="zalopay">
+                <img src="{{ url_for('static', filename='images/zalopay.png') }}" alt="ZaloPay">
+                <span>ZaloPay</span>
+            </div>
+            <div class="payment-method" data-method="bank">
+                <img src="{{ url_for('static', filename='images/bank.jpg') }}" alt="Chuyển khoản">
+                <span>Chuyển khoản</span>
+            </div>
+        </div>
+        <button type="submit" id="pay-button" class="btn btn-primary mt-3">Thanh toán</button>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/payment.js') }}"></script>
+{% endblock %}

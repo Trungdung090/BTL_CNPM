@@ -1,0 +1,40 @@
+.payment-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.payment-method {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.payment-method:hover {
+    background-color: #f8f9fa;
+}
+
+.payment-method.selected {
+    border-color: #2e8b57;
+    background-color: rgba(46, 139, 87, 0.1);
+}
+
+.payment-method img {
+    width: 40px;
+    margin-right: 15px;
+}
+
+#pay-button {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.1rem;
+}

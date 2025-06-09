@@ -1,0 +1,595 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+{% block content %}
+<div class="admin-header mb-4">
+    <h1>Trang quản trị</h1>
+    <p class="lead">Quản lý hệ thống đặt sân bóng</p>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="admin-sidebar">
+            <ul class="nav flex-column nav-pills">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#dashboard" data-bs-toggle="tab">Tổng quan</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#pitches" data-bs-toggle="tab">Quản lý sân</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#bookings" data-bs-toggle="tab">Quản lý đặt sân</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#users" data-bs-toggle="tab">Quản lý người dùng</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <div class="tab-content">
+            <!-- Dashboard tab -->
+            <div class="tab-pane fade show active" id="dashboard">
+                <h3 class="mb-3">Thống kê tổng quan</h3>
+
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="stat-card bg-primary">
+                            <h4>Tổng doanh thu</h4>
+                            <p class="stat-value">{{ "{:,.0f}".format(total_revenue) }} VND</p>
+                            <p class="stat-period">Tháng này</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card bg-success">
+                            <h4>Sân đã đặt</h4>
+                            <p class="stat-value">{{ bookings_this_month }}</p>
+                            <p class="stat-period">Tháng này</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card bg-info">
+                            <h4>Người dùng mới</h4>
+                            <p class="stat-value">{{ new_users }}</p>
+                            <p class="stat-period">Tháng này</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-bookings">
+                    <h4 class="mb-3">Đơn đặt sân gần đây</h4>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Sân</th>
+                                    <th>Ngày</th>
+                                    <th>Giờ</th>
+                                    <th>Giá</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in bookings[:5] %}
+                                <tr>
+                                    <td>{{ booking['id'] }}</td>
+                                    <td>{{ booking['pitch_name'] }}</td>
+                                    <td>{{ booking['booking_date'] }}</td>
+                                    <td>{{ booking['start_time'] }}-{{ booking['end_time'] }}</td>
+                                    <td>{{ "{:,.0f}".format(booking['total_price']) }} VND</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if booking['status'] == 'confirmed' else 'warning' if booking['status'] == 'pending_payment' else 'danger' }}">
+                                            {{ 'Đã xác nhận' if booking['status'] == 'confirmed' else 'Chờ thanh toán' if booking['status'] == 'pending_payment' else 'Đã hủy' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pitches management tab -->
+            <div class="tab-pane fade" id="pitches">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3>Quản lý sân bóng</h3>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPitchModal">
+                        <i class="bi bi-plus"></i> Thêm sân mới
+                    </button>
+                </div>
+
+                <!-- Alert for pitch actions -->
+                <div class="alert alert-success d-none" id="pitchActionAlert">
+                    <i class="bi bi-check-circle"></i> <span id="pitchActionMessage"></span>
+                </div>
+
+                <!-- Search and filter for pitches -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="pitchSearchInput" placeholder="Tìm kiếm theo tên sân, địa chỉ...">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <label class="input-group-text" for="pitchStatusFilter">Trạng thái</label>
+                            <select class="form-select" id="pitchStatusFilter">
+                                <option value="all" selected>Tất cả</option>
+                                <option value="active">Đang hoạt động</option>
+                                <option value="inactive">Ngừng hoạt động</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pitches table -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="pitchesTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên sân</th>
+                                <th>Địa chỉ</th>
+                                <th>Giá thuê</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pitch in pitches %}
+                            <tr data-pitch-id="{{ pitch['id'] }}">
+                                <td>{{ pitch['id'] }}</td>
+                                <td>{{ pitch['name'] }}</td>
+                                <td>{{ pitch['address'] }}</td>
+                                <td>{{ "{:,.0f}".format(pitch['price']) }} VND/giờ</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if pitch['is_active'] else 'secondary' }}">
+                                        {{ 'Hoạt động' if pitch['is_active'] else 'Ngừng hoạt động' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary edit-pitch-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editPitchModal"
+                                        data-pitch-id="{{ pitch['id'] }}"
+                                        data-pitch-name="{{ pitch['name'] }}"
+                                        data-pitch-address="{{ pitch['address'] }}"
+                                        data-pitch-phone="{{ pitch['phone'] }}"
+                                        data-pitch-price="{{ pitch['price'] }}"
+                                        data-pitch-description="{{ pitch['description'] }}"
+                                        data-pitch-status="{{ pitch['is_active'] }}"
+                                        data-pitch-image="{{ pitch['image'] }}">
+                                        <i class="bi bi-pencil"></i> Sửa
+                                    </button>
+                                    <button class="btn btn-sm btn-danger delete-pitch-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deletePitchModal"
+                                        data-pitch-id="{{ pitch['id'] }}"
+                                        data-pitch-name="{{ pitch['name'] }}">
+                                        <i class="bi bi-trash"></i> Xóa
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination if needed -->
+                {% if pitches|length > 10 %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Trước</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+
+            <!-- Bookings tab -->
+            <div class="tab-pane fade" id="bookings">
+                <h3 class="mb-3">Quản lý đặt sân</h3>
+
+                <!-- Search and filters for bookings -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="bookingSearchInput" placeholder="Tìm kiếm người đặt, sân...">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <label class="input-group-text" for="bookingStatusFilter">Trạng thái</label>
+                            <select class="form-select" id="bookingStatusFilter">
+                                <option value="all" selected>Tất cả</option>
+                                <option value="confirmed">Đã xác nhận</option>
+                                <option value="pending_payment">Chờ thanh toán</option>
+                                <option value="cancelled">Đã hủy</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <label class="input-group-text" for="bookingDateFilter">Ngày</label>
+                            <input type="date" class="form-control" id="bookingDateFilter">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alert for booking actions -->
+                <div class="alert alert-success d-none" id="bookingActionAlert">
+                    <i class="bi bi-check-circle"></i> <span id="bookingActionMessage"></span>
+                </div>
+
+                <!-- Bookings table -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="bookingsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Người đặt</th>
+                                <th>Sân</th>
+                                <th>Ngày</th>
+                                <th>Giờ</th>
+                                <th>Giá</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr data-booking-id="{{ booking['id'] }}">
+                                <td>{{ booking['id'] }}</td>
+                                <td>{{ booking['user_name'] }}</td>
+                                <td>{{ booking['pitch_name'] }}</td>
+                                <td>{{ booking['booking_date'] }}</td>
+                                <td>{{ booking['start_time'] }}-{{ booking['end_time'] }}</td>
+                                <td>{{ "{:,.0f}".format(booking['total_price']) }} VND</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if booking['status'] == 'confirmed' else 'warning' if booking['status'] == 'pending_payment' else 'danger' }}">
+                                        {{ 'Đã xác nhận' if booking['status'] == 'confirmed' else 'Chờ thanh toán' if booking['status'] == 'pending_payment' else 'Đã hủy' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if booking['status'] == 'confirmed' %}
+                                    <button class="btn btn-sm btn-danger cancel-booking-btn" data-booking-id="{{ booking['id'] }}">
+                                        <i class="bi bi-x"></i> Hủy
+                                    </button>
+                                    {% elif booking['status'] == 'pending_payment' %}
+                                    <button class="btn btn-sm btn-success confirm-booking-btn" data-booking-id="{{ booking['id'] }}">
+                                        <i class="bi bi-check"></i> Xác nhận
+                                    </button>
+                                    <button class="btn btn-sm btn-danger cancel-booking-btn" data-booking-id="{{ booking['id'] }}">
+                                        <i class="bi bi-x"></i> Hủy
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination if needed -->
+                {% if bookings|length > 10 %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Trước</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+
+            <!-- Users management tab -->
+            <div class="tab-pane fade" id="users">
+                <h3 class="mb-3">Quản lý người dùng</h3>
+                <!-- Search and filters for users -->
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="userSearchInput" placeholder="Tìm kiếm theo tên, email, số điện thoại...">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <label class="input-group-text" for="userRoleFilter">Vai trò</label>
+                            <select class="form-select" id="userRoleFilter">
+                                <option value="all" selected>Tất cả</option>
+                                <option value="admin">Quản trị viên</option>
+                                <option value="user">Người dùng</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users table -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Họ tên</th>
+                                <th>Email</th>
+                                <th>Số điện thoại</th>
+                                <th>Vai trò</th>
+                                <th>Ngày đăng ký</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr data-user-id="{{ user['id'] }}">
+                                <td>{{ user['id'] }}</td>
+                                <td>{{ user['name'] }}</td>
+                                <td>{{ user['email'] }}</td>
+                                <td>{{ user['phone'] }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if user['role'] == 'admin' else 'secondary' }}">
+                                        {{ 'Quản trị viên' if user['role'] == 'admin' else 'Người dùng' }}
+                                    </span>
+                                </td>
+                                <td>{{ user['registration_date'] }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if user['is_active'] else 'danger' }}">
+                                        {{ 'Hoạt động' if user['is_active'] else 'Đã khóa' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary edit-user-btn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editUserModal"
+                                        data-user-id="{{ user['id'] }}"
+                                        data-user-name="{{ user['name'] }}"
+                                        data-user-email="{{ user['email'] }}"
+                                        data-user-phone="{{ user['phone'] }}"
+                                        data-user-role="{{ user['role'] }}"
+                                        data-user-status="{{ user['is_active'] }}">
+                                        <i class="bi bi-pencil"></i> Sửa
+                                    </button>
+                                    <button class="btn btn-sm btn-{{ 'danger' if user['is_active'] else 'success' }} toggle-user-status-btn"
+                                        data-user-id="{{ user['id'] }}"
+                                        data-user-status="{{ user['is_active'] }}">
+                                        <i class="bi bi-{{ 'lock' if user['is_active'] else 'unlock' }}"></i>
+                                        {{ 'Khóa' if user['is_active'] else 'Mở khóa' }}
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination if needed -->
+                {% if users|length > 10 %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Trước</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Forms -->
+<!-- Modal thêm sân mới -->
+<div class="modal fade" id="addPitchModal" tabindex="-1" aria-labelledby="addPitchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPitchModalLabel">Thêm sân bóng mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPitchForm">
+                    <div class="mb-3">
+                        <label for="pitchName" class="form-label">Tên sân</label>
+                        <input type="text" class="form-control" id="pitchName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pitchAddress" class="form-label">Địa chỉ</label>
+                        <input type="text" class="form-control" id="pitchAddress" name="address" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pitchPhone" class="form-label">Số điện thoại liên hệ</label>
+                        <input type="tel" class="form-control" id="pitchPhone" name="phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pitchPrice" class="form-label">Giá thuê (VND/giờ)</label>
+                        <input type="number" class="form-control" id="pitchPrice" name="price" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pitchImage" class="form-label">Hình ảnh sân</label>
+                        <input type="file" class="form-control" id="pitchImage" name="image" accept=".png,.jpg,.jpeg">
+                    </div>
+                    <div class="mb-3">
+                        <label for="pitchDescription" class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="pitchDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label d-block">Trạng thái</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="is_active" id="pitchStatusActive" value="true" checked>
+                            <label class="form-check-label" for="pitchStatusActive">
+                                <span class="badge bg-success">Đang hoạt động</span>
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="is_active" id="pitchStatusInactive" value="false">
+                            <label class="form-check-label" for="pitchStatusInactive">
+                                <span class="badge bg-secondary">Ngừng hoạt động</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="savePitchBtn">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal sửa thông tin sân -->
+<div class="modal fade" id="editPitchModal" tabindex="-1" aria-labelledby="editPitchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPitchModalLabel">Sửa thông tin sân bóng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPitchForm" enctype="multipart/form-data">
+                    <input type="hidden" id="editPitchId" name="id">
+                    <div class="mb-3">
+                        <label for="editPitchName" class="form-label">Tên sân</label>
+                        <input type="text" class="form-control" id="editPitchName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPitchAddress" class="form-label">Địa chỉ</label>
+                        <input type="text" class="form-control" id="editPitchAddress" name="address" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPitchPhone" class="form-label">Số điện thoại</label>
+                        <input type="tel" class="form-control" id="editPitchPhone" name="phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPitchPrice" class="form-label">Giá thuê (VND/giờ)</label>
+                        <input type="number" class="form-control" id="editPitchPrice" name="price" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPitchImage" class="form-label">Hình ảnh sân</label>
+                        <input type="file" class="form-control" id="editPitchImage" name="image" accept=".png,.jpg,.jpeg">
+                        <small class="form-text text-muted">Để trống nếu không muốn thay đổi hình ảnh.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPitchDescription" class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="editPitchDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label d-block">Trạng thái</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="is_active" id="editPitchStatusActive" value="true" checked>
+                            <label class="form-check-label" for="editPitchStatusActive">
+                                <span class="badge bg-success">Đang hoạt động</span>
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="is_active" id="editPitchStatusInactive" value="false">
+                            <label class="form-check-label" for="editPitchStatusInactive">
+                                <span class="badge bg-secondary">Ngừng hoạt động</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="updatePitchBtn" disabled>Lưu</button>
+                <div class="spinner-border spinner-border-sm text-primary d-none" id="updatePitchSpinner"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xóa sân -->
+<div class="modal fade" id="deletePitchModal" tabindex="-1" aria-labelledby="deletePitchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deletePitchModalLabel">Xóa sân bóng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="deletePitchId">
+                <p>Bạn có chắc chắn muốn xóa sân <strong id="deletePitchName"></strong>?</p>
+                <p class="text-danger">Lưu ý: Hành động này không thể hoàn tác và sẽ xóa tất cả các lịch đặt sân liên quan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDeletePitchBtn">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal sửa thông tin người dùng -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editUserModalLabel">Sửa thông tin người dùng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId" name="id">
+                    <div class="mb-3">
+                        <label for="editUserName" class="form-label">Họ tên</label>
+                        <input type="text" class="form-control" id="editUserName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editUserEmail" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserPhone" class="form-label">Số điện thoại</label>
+                        <input type="tel" class="form-control" id="editUserPhone" name="phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserRole" class="form-label">Vai trò</label>
+                        <select class="form-select" id="editUserRole" name="role">
+                            <option value="user">Người dùng</option>
+                            <option value="admin">Quản trị viên</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="editUserStatus" name="is_active">
+                        <label class="form-check-label" for="editUserStatus">Hoạt động</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="updateUserBtn">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

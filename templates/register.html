@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+{% endblock %}
+{% block content %}
+<div class="register-container">
+    <div class="register-card">
+        <h2 class="text-center mb-4">Đăng ký</h2>
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="mb-3">
+                <label for="fullname" class="form-label">Họ và tên *</label>
+                <input type="text" class="form-control" id="fullname" name="fullname" required>
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label">Số điện thoại *</label>
+                <input type="tel" class="form-control" id="phone" name="phone" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email *</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Mật khẩu *</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label">Nhập lại mật khẩu *</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Đăng ký</button>
+        </form>
+        <div class="text-center mt-3">
+            <p>Đã có tài khoản? <a href="{{ url_for('login') }}">Đăng nhập ngay</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/register.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,91 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 2rem 0;
+}
+
+.login-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    width: 100%;
+    max-width: 500px;
+}
+
+.login-card h2 {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.login-card .form-control {
+    padding: 0.75rem;
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+}
+
+.login-card .form-control:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+}
+
+.login-card .btn {
+    padding: 0.75rem;
+    font-weight: 500;
+    font-size: 1.1rem;
+}
+
+.social-login {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.social-login p {
+    position: relative;
+    margin-bottom: 1.5rem;
+    color: #6c757d;
+}
+
+.social-login p::before,
+.social-login p::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 30%;
+    height: 1px;
+    background-color: #dee2e6;
+}
+
+.social-login p::before {
+    left: 0;
+}
+
+.social-login p::after {
+    right: 0;
+}
+
+.social-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    color: #495057;
+    border: none;
+    transition: all 0.3s;
+}
+
+.social-btn:hover {
+    background-color: #e9ecef;
+    transform: translateY(-2px);
+}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pitches.css') }}">
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="text-center mb-4">
+        <h2 class="section-title">Sân bóng đá tại Thái Nguyên</h2>
+        <p class="section-subtitle">Chọn sân phù hợp với nhu cầu của bạn</p>
+    </div>
+
+    <!-- Danh sách sân dạng card dọc -->
+    <div class="row">
+        {% for pitch in pitches %}
+        <div class="col-md-4 col-sm-6 mb-4">
+            <div class="pitch-card-vertical">
+                <div class="pitch-image-container">
+                    <img src="{{ url_for('static', filename='images/' + pitch['image']) }}"
+                         class="pitch-image" alt="{{ pitch['name'] }}">
+                    <div class="price-badge">
+                        <span class="price-amount">{{ "{:,.0f}".format(pitch['price']) }}</span>
+                        <span class="price-unit">VND/giờ</span>
+                    </div>
+                </div>
+                <div class="pitch-info">
+                    <h3 class="pitch-name">{{ pitch['name'] }}</h3>
+                    <div class="pitch-meta">
+                        <p class="pitch-address">
+                            <i class="bi bi-geo-alt"></i> {{ pitch['address'] }}
+                        </p>
+                        <p class="pitch-phone">
+                            <i class="bi bi-telephone"></i> {{ pitch['phone'] }}
+                        </p>
+                    </div>
+                    <a href="{{ url_for('book', pitch_id=pitch['id']) }}" class="btn btn-book">
+                        <i class="bi bi-calendar-plus"></i> Đặt sân
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if total_pages > 1 %}
+    <nav aria-label="Page navigation" class="d-flex justify-content-center mt-4">
+        <ul class="pagination">
+            <!-- Previous Button -->
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('pitches', page=page-1) }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <!-- Page Numbers -->
+            {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('pitches', page=p) }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+            <!-- Next Button -->
+            <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('pitches', page=page+1) }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
+{% block content %}
+<div class="hero-section bg-light p-5 rounded-lg mb-5">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h1 class="display-4">Đặt sân bóng đá dễ dàng tại Thái Nguyên</h1>
+            <p class="lead">Hệ thống đặt sân bóng đá trực tuyến nhanh chóng, tiện lợi</p>
+            <a href="{{ url_for('pitches') }}" class="btn btn-success btn-lg">Đặt sân ngay</a>
+        </div>
+    </div>
+</div>
+
+<div class="feature-section mb-5">
+    <h2 class="text-center mb-4">Tại sao chọn chúng tôi?</h2>
+    <div class="row text-center">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Đặt sân nhanh chóng</h5>
+                    <p class="card-text">Chỉ với vài thao tác, bạn có thể đặt sân bóng tiện lợi, nhanh chóng mọi lúc mọi nơi.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Thanh toán an toàn</h5>
+                    <p class="card-text">Hỗ trợ thanh toán online an toàn qua VNPay.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Hỗ trợ 24/7.</h5>
+                    <p class="card-text">Đội ngũ hỗ trợ luôn sẵn sàng giải đáp mọi thắc mắc.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="popular-pitches mb-5">
+    <h2 class="text-center mb-4">Sân bóng phổ biến</h2>
+    <div class="row">
+        {% for pitch in popular_pitches %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ url_for('static', filename='images/' + pitch['image']) }}" class="card-img-top" alt="{{ pitch['name'] }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ pitch['name'] }}</h5>
+                    <p class="card-text">{{ pitch['description'] }}</p>
+                    <p class="text-success fw-bold">{{ "{:,.0f}".format(pitch['price']) }} VND/giờ</p>
+                    <a href="{{ url_for('book', pitch_id=pitch['id']) }}" class="btn btn-success">Đặt sân</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+{% endblock %}

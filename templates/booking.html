@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/booking.css') }}">
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Đặt Sân: {{ pitch.name }}</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/' + pitch.image) }}" class="img-fluid rounded" alt="{{ pitch.name }}">
+        </div>
+        <div class="col-md-6">
+            <form id="booking-form" method="POST" action="{{ url_for('book', pitch_id=pitch.id) }}">
+                <input type="hidden" id="price_per_hour" value="{{ pitch.price }}">
+                <input type="hidden" id="selected_time" name="selected_time">
+
+                <div class="form-group mb-3">
+                    <label for="booking_date">Chọn ngày:</label>
+                    <input type="date" class="form-control" id="booking_date" name="booking_date" required>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Chọn khung giờ:</label>
+                    <div class="time-slots">
+                        {% for time in ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'] %}
+                            <div class="time-slot" data-time="{{ time }}">{{ time }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="booking_hours">Số giờ đặt:</label>
+                    <div class="input-group">
+                        <input type="number"
+                               class="form-control text-center"
+                               id="booking_hours"
+                               name="booking_hours"
+                               min="1"
+                               max="8"
+                               value="1"
+                               required>
+                    </div>
+                    <small class="form-text text-muted">Nhập số giờ (tối thiểu 1 giờ, tối đa 8 giờ)</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Tổng giá:</label>
+                    <div id="total_price" class="total-price">{{ pitch.price|int }} VND</div>
+                    <input type="hidden" id="total_price_input" name="total_price" value="{{ pitch.price|int }}">
+                </div>
+                    <button type="submit" class="btn btn-primary">Tiếp tục thanh toán</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/booking.js') }}"></script>
+{% endblock %}

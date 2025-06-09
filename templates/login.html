@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <h2 class="text-center mb-4">Đăng nhập</h2>
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="mb-3">
+                <label for="email_or_phone" class="form-label">Email hoặc số điện thoại *</label>
+                <input type="text" class="form-control" id="email_or_phone" name="email_or_phone" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Mật khẩu *</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+                <div class="text-end mt-2">
+                    <a href="#" class="text-muted small">Quên mật khẩu?</a>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Đăng nhập</button>
+        </form>
+        <div class="text-center mt-3">
+            <p>Chưa có tài khoản? <a href="{{ url_for('register') }}">Đăng ký ngay</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+{% endblock %}
